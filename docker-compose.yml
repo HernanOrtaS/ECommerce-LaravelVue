@@ -1,0 +1,68 @@
+name: LaravelApiVueStore
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    volumes:
+      - ./backend/src:/var/www/html
+    networks:
+      - LaravelVue
+    user: 1000:1000
+
+  web:
+    image: nginx:stable-alpine
+    volumes:
+      - ./backend/src:/var/www/html
+      - ./backend/nginx:/etc/nginx/conf.d
+    networks:
+      - LaravelVue
+    ports:
+      - 8000:80
+    depends_on:
+      app:
+        condition: service_started
+
+  db:
+    image: mysql:9.7
+    networks:
+      - LaravelVue
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+
+  composer:
+    image: composer:2.2.29
+    volumes:
+      - ./backend/src:/app
+    networks:
+      - LaravelVue
+    user: 1000:1000
+
+  node:
+    image: node:24.19.0
+    volumes:
+      - ./backend/src:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - LaravelVue
+    ports:
+      - 5173:5173
+    user: 1000:1000
+
+  vue:
+    image: node:24.19.0
+    volumes:
+      - ./frontend/src:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - LaravelVue
+    ports:
+      - 5174:5173
+    user: 1000:1000
+
+networks:
+  LaravelVue:
+    driver: bridge
